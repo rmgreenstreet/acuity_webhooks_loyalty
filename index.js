@@ -23,6 +23,7 @@ const addLoyaltyPoints = async (order) => {
             customerIds: [order.customerId]
         }
     });
+    // TODO: check whether a loyalty account is returned before continuing, and break out if not. use promises
     await loyaltyApi.accumulateLoyaltyPoints(loyaltyAccount.id, {
         accumulatePoints: {
             orderId: order.id
