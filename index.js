@@ -23,13 +23,13 @@ const addLoyaltyPoints = async (order) => {
             customerIds: [order.customerId]
         }
     });
-    loyaltyApi.accumulateLoyaltyPoints(loyaltyAccount.id, {
+    await loyaltyApi.accumulateLoyaltyPoints(loyaltyAccount.id, {
         accumulatePoints: {
             orderId: order.id
         },
         locationId: process.env.LOCATION_ID,
         idempotencyKey: crypto.randomUUID()
-    })
+    });
 }
 
 app.get("/new_order", async (req, res) => {
