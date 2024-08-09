@@ -6,7 +6,8 @@ const express = require("express");
 const app = express();
 const crypto = require("node:crypto");
 
-const asyncWrapper = require("./utils/asyncWrapper")
+const asyncWrapper = require("./utils/asyncWrapper");
+const ExpressError = require("./utils/ExpressError");
 
 const { Client, Environment, ApiError } = require("square");
 
@@ -62,14 +63,14 @@ const updatedPaymentRequestHandler = async (req, res, next) => {
     return new Promise(async (resolve, reject) => {
         try {
             if (req.body) {
-                const payment = req.body;
+                const { payment } = req.body.data.object;
                 console.log("Payment detected: ", payment);
                 if (payment.status === "COMPLETED") {
                     console.log("Finding the corresponding order")
                     const orderDetails = await ordersApi.retrieveOrder(payment.order_id);
                     console.log("Found order: ", orderDetails.id)
                     if (orderDetails.result.order.tenders[0].type === "CASH") {
-                        throw new Error("This order was cash, not possible to be acuity")
+                        throw new ExpressError("This order was cash, not possible to be acuity", 200)
                     }
                     if (orderDetails.result.order.source.name && 
                         orderDetails.result.order.source.name == "Acuity Scheduling") {
@@ -78,13 +79,13 @@ const updatedPaymentRequestHandler = async (req, res, next) => {
                                 resolve(console.log("Loyalty points successfully added"), res.send("Loyalty points successfully added"))
                             })
                     } else {
-                        throw new Error("The transaction is not from Acuity Scheduling")
+                        throw new ExpressError("The transaction is not from Acuity Scheduling", 200)
                     }
                 } else {
-                    throw new Error("The transaction has not yet been completed")
+                    throw new ExpressError("The transaction has not yet been completed", 200)
                 }
             }  else {
-                throw new Error("The request does not have data")
+                throw new ExpressError("The request does not have data", 200)
             }
         } catch(error) {
             if (error instanceof ApiError) {
