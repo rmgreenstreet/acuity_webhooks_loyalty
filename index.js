@@ -83,13 +83,13 @@ const updatedPaymentRequestHandler = async (req, res, next) => {
                                 resolve(console.log("Loyalty points successfully added"), res.send("Loyalty points successfully added"))
                             })
                     } else {
-                        throw new ExpressError("The transaction is not from Acuity Scheduling, it will be skipped", 200)
+                        resolve(res.status(204), console.log("The transaction is not from Acuity Scheduling, it will be skipped"));
                     }
                 } else {
-                    throw new ExpressError("The transaction has not yet been completed, it will be skipped", 200)
+                    resolve(res.status(204), console.log("The transaction has not yet been completed, it will be skipped"));
                 }
             }  else {
-                throw new ExpressError("The request does not have data, it will be skipped", 200)
+                resolve(res.status(400), console.log("The request does not have payment data. Try again"))
             }
         } catch(error) {
             if (error instanceof ApiError) {
