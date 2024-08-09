@@ -14,9 +14,9 @@ const { Client, Environment, ApiError } = require("square");
 
 const client = new Client({
     bearerAuthCredentials: {
-      accessToken: process.env.SQUARE_SANDBOX_ACCESS_TOKEN
+      accessToken: process.env.SQUARE_ACCESS_TOKEN
     },
-  environment: Environment.Sandbox,
+  environment: Environment.Production,
 });
 
 const { paymentsApi, loyaltyApi, ordersApi } = client;
