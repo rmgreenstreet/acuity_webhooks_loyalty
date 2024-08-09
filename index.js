@@ -17,7 +17,7 @@ const client = new Client({
   environment: Environment.Production,
 });
 
-const { paymentsApi, loyaltyApi, ordersApi } = client;
+const { loyaltyApi, ordersApi } = client;
 
 app.use(express.json())
 
@@ -61,8 +61,8 @@ const updatedPaymentRequestHandler = async (req, res, next) => {
     console.log("Received payment update notification")
     return new Promise(async (resolve, reject) => {
         try {
-            if (req.body.payment) {
-                const { payment } = req.body;
+            if (req.body) {
+                const payment = req.body;
                 console.log("Payment detected: ", payment);
                 if (payment.status === "COMPLETED") {
                     console.log("Finding the corresponding order")
