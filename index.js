@@ -8,31 +8,40 @@ const crypto = require("node:crypto");
 
 const PORT = 3000;
 
+const asyncWrapper = require("./utils/asyncWrapper")
+
 const { Client, Environment, ApiError } = require("square");
 
 const client = new Client({
     bearerAuthCredentials: {
-      accessToken: process.env.SQUARE_ACCESS_TOKEN
+      accessToken: process.env.SQUARE_SANDBOX_ACCESS_TOKEN
     },
-  environment: Environment.Production,
+  environment: Environment.Sandbox,
 });
 
-const { customersApi, loyaltyApi, ordersApi } = client;
+const { paymentsApi, loyaltyApi, ordersApi } = client;
 
-const addLoyaltyPoints = async (order) => {
+app.use(express.json())
+
+const addLoyaltyPoints = async (payment) => {
+    console.log("entering addLoyaltyPoints")
     return new Promise(async (resolve, reject) => {
         try {
             const loyaltyAccount = await loyaltyApi.searchLoyaltyAccounts({
                 query: {
-                    customerIds: [order.customerId]
+                    customerIds: [payment.customer_id]
                 }
             });
-            // TODO: check whether a loyalty account is returned before continuing, and break out if not. use promises
-            await loyaltyApi.accumulateLoyaltyPoints(loyaltyAccount.id, {
+            console.log(loyaltyAccount);
+            reject("Testing");
+            if (Object.keys(loyaltyAccount.result).length === 0) {
+                throw new Error(`Loyalty account not found for payment ${payment.id}`)
+            }
+            await loyaltyApi.accumulateLoyaltyPoints(loyaltyAccount.result.loyaltyAccounts.id, {
                 accumulatePoints: {
-                    orderId: order.id
+                    orderId: payment.order_id
                 },
-                locationId: process.env.LOCATION_ID,
+                locationId: payment.location_id,
                 idempotencyKey: crypto.randomUUID()
             });
             resolve(`Successfully added points to loyalty account ${loyaltyAccount.id} for transaction ${order.id}`)
@@ -54,16 +63,28 @@ const addLoyaltyPoints = async (order) => {
 const newOrderRequestHandler = async (req, res, next) => {
     return new Promise(async (resolve, reject) => {
         try {
-            if (req.body.data.object.state === "COMPLETED") {
-                if (orderDetails.order.source.name && 
-                    orderDetails.order.source.name == "Acuity Scheduling") {
-                        const orderDetails = await ordersApi.retrieveOrder(req.body.data.object.order_id);
-                        await addLoyaltyPoints(orderDetails);
-                        resolve(res.send("Loyalty points successfully added"))
+            if (req.body.payment) {
+                const { payment } = req.body;
+                console.log(payment);
+                if (payment.status === "COMPLETED") {
+                    const orderDetails = await ordersApi.retrieveOrder(payment.order_id);
+                    if (orderDetails.result.order.tenders[0].type === "CASH") {
+                        throw new Error("This order was cash, not possible to be acuity")
+                    }
+                    if (orderDetails.result.order.source.name && 
+                        orderDetails.result.order.source.name == "Acuity Scheduling") {
+                            await addLoyaltyPoints(payment).then(() => {
+                                resolve(res.send("Loyalty points successfully added"))
+                            })
+                    } else {
+                        throw new Error("The transaction is not from Acuity Scheduling")
+                    }
                 } else {
-                    throw new Error("The transaction is not from Acuity Scheduling")
+                    throw new Error("The transaction has not yet been completed")
                 }
-            }  
+            }  else {
+                throw new Error("The request does not have data")
+            }
         } catch(error) {
             if (error instanceof ApiError) {
                 error.result.errors.forEach(function (e) {
@@ -74,15 +95,15 @@ const newOrderRequestHandler = async (req, res, next) => {
                 reject("There was a problem with the API service")
               } else {
                 console.log("Unexpected error occurred: ", error);
-                reject(res.send(error));
+                reject(error);
               }
         }
     });
 }
 
-app.get("/new_order", newOrderRequestHandler);
+app.post("/payment_updated", asyncWrapper(newOrderRequestHandler));
 
-app.get("*", (req, res) => {
+app.all("*", (req, res) => {
     res.send("This is not a valid endpoint");
 });
 
