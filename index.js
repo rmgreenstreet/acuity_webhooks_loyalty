@@ -1,12 +1,10 @@
-// if(process.env.NODE_ENV !== "production") {
-//     require("dotenv").config();
-// };
+if(process.env.NODE_ENV !== "production") {
+    require("dotenv").config();
+};
 
 const express = require("express");
 const app = express();
 const crypto = require("node:crypto");
-
-const PORT = 3000;
 
 const asyncWrapper = require("./utils/asyncWrapper")
 
@@ -32,11 +30,10 @@ const addLoyaltyPoints = async (payment) => {
                     customerIds: [payment.customer_id]
                 }
             });
-            console.log(loyaltyAccount);
-            reject("Testing");
             if (Object.keys(loyaltyAccount.result).length === 0) {
                 throw new Error(`Loyalty account not found for payment ${payment.id}`)
             }
+            console.log("Found loyalty account: ", loyaltyAccount);
             await loyaltyApi.accumulateLoyaltyPoints(loyaltyAccount.result.loyaltyAccounts.id, {
                 accumulatePoints: {
                     orderId: payment.order_id
@@ -60,21 +57,25 @@ const addLoyaltyPoints = async (payment) => {
     
 }
 
-const newOrderRequestHandler = async (req, res, next) => {
+const updatedPaymentRequestHandler = async (req, res, next) => {
+    console.log("Received payment update notification")
     return new Promise(async (resolve, reject) => {
         try {
             if (req.body.payment) {
                 const { payment } = req.body;
-                console.log(payment);
+                console.log("Payment detected: ", payment);
                 if (payment.status === "COMPLETED") {
+                    console.log("Finding the corresponding order")
                     const orderDetails = await ordersApi.retrieveOrder(payment.order_id);
+                    console.log("Found order: ", orderDetails.id)
                     if (orderDetails.result.order.tenders[0].type === "CASH") {
                         throw new Error("This order was cash, not possible to be acuity")
                     }
                     if (orderDetails.result.order.source.name && 
                         orderDetails.result.order.source.name == "Acuity Scheduling") {
+                            console.log("This order came from Acuity. Attempting to add loyalty points");
                             await addLoyaltyPoints(payment).then(() => {
-                                resolve(res.send("Loyalty points successfully added"))
+                                resolve(console.log("Loyalty points successfully added"), res.send("Loyalty points successfully added"))
                             })
                     } else {
                         throw new Error("The transaction is not from Acuity Scheduling")
@@ -101,12 +102,12 @@ const newOrderRequestHandler = async (req, res, next) => {
     });
 }
 
-app.post("/payment_updated", asyncWrapper(newOrderRequestHandler));
+app.post("/payment_updated", asyncWrapper(updatedPaymentRequestHandler));
 
 app.all("*", (req, res) => {
     res.send("This is not a valid endpoint");
 });
 
-app.listen(PORT, () => {
-    console.log("Server listening on port ", PORT);
+app.listen(process.env.PORT, () => {
+    console.log("Server listening on port ", process.env.PORT);
 });
