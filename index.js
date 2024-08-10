@@ -27,8 +27,11 @@ const errorLogColors = "background-color:red;"
 app.use(express.json())
 
 
-// TODO Find out how to send back an "ok" status code when breaking out of the try blocks
-
+const quickResponse = async(req, res, next) => {
+    res.status(200)
+    res.send("Request Received");
+    next();
+}
 
 const addLoyaltyPoints = async (payment, res) => {
     console.log("entering addLoyaltyPoints")
@@ -118,7 +121,7 @@ const updatedPaymentRequestHandler = async (req, res, next) => {
     });
 }
 
-app.post("/payment_updated", asyncWrapper(updatedPaymentRequestHandler));
+app.post("/payment_updated", quickResponse, asyncWrapper(updatedPaymentRequestHandler));
 
 app.all("*", (req, res) => {
     res.send("This is not a valid endpoint");
