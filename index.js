@@ -36,7 +36,7 @@ const addLoyaltyPoints = async (payment) => {
                 }
             });
             if (Object.keys(loyaltyAccount.result).length === 0) {
-                throw new Error(`Loyalty account not found for payment ${payment.id}`)
+                resolve(res.status(204), console.log(`Loyalty account not found for payment ${payment.id}`));
             }
             console.log("Found loyalty account: ", loyaltyAccount);
             await loyaltyApi.accumulateLoyaltyPoints(loyaltyAccount.result.loyaltyAccounts.id, {
