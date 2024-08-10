@@ -31,7 +31,7 @@ const addLoyaltyPoints = async (payment, res) => {
     return new Promise(async (resolve, reject) => {
         try {
             if (!payment.customer_id) {
-                resolve(res.status(204), console.log("No customer Id attached to payment"))
+                resolve(res.status(204), console.warn("No customer Id attached to payment"))
             }
             console.log("attempting to find loyalty account for: ", payment.customer_id);
             const loyaltyAccount = await loyaltyApi.searchLoyaltyAccounts({
@@ -40,10 +40,10 @@ const addLoyaltyPoints = async (payment, res) => {
                 }
             });
             if (Object.keys(loyaltyAccount.result).length === 0) {
-                resolve(res.status(204), console.log(`Loyalty account not found for payment ${payment.id}`));
+                resolve(res.status(204), console.warn(`Loyalty account not found for payment ${payment.id}`));
             }
             if (typeof loyaltyAccount.result.loyaltyAccounts.id == undefined) {
-                resolve(res.status(204), console.log(`Loyalty account not found for payment ${payment.id}`));
+                resolve(res.status(204), console.warn(`Loyalty account not found for payment ${payment.id}`));
             }
             console.log("Found loyalty account: ", loyaltyAccount);
             await loyaltyApi.accumulateLoyaltyPoints(loyaltyAccount.result.loyaltyAccounts.id, {
@@ -79,24 +79,24 @@ const updatedPaymentRequestHandler = async (req, res, next) => {
                 if (payment.status === "COMPLETED") {
                     console.log("Finding the corresponding order")
                     const orderDetails = await ordersApi.retrieveOrder(payment.order_id);
-                    console.log("Found order: ", orderDetails)
+                    console.log("\x1b[32m", `Found order: ${orderDetails}`)
                     if (orderDetails.result.order.tenders[0].type === "CASH") {
-                        resolve(res.status(204), console.log("This order was cash, not possible to be acuity, it will be skipped"))
+                        resolve(res.status(204), console.warn("This order was cash, not possible to be acuity, it will be skipped"))
                     }
                     if (orderDetails.result.order.source.name && 
                         orderDetails.result.order.source.name == "Acuity Scheduling") {
                             console.log("This order came from Acuity. Attempting to add loyalty points");
                             await addLoyaltyPoints(payment, res).then(() => {
-                                resolve(console.log("Loyalty points successfully added"), res.send("Loyalty points successfully added"))
+                                resolve(res.status(200), console.log("\x1b[32m", "Loyalty points successfully added"), res.send("Loyalty points successfully added"))
                             })
                     } else {
-                        resolve(res.status(204), console.log("The transaction is not from Acuity Scheduling, it will be skipped"));
+                        resolve(res.status(204), console.warn("The transaction is not from Acuity Scheduling, it will be skipped"));
                     }
                 } else {
-                    resolve(res.status(204), console.log("The transaction has not yet been completed, it will be skipped"));
+                    resolve(res.status(204), console.warn("The transaction has not yet been completed, it will be skipped"));
                 }
             }  else {
-                resolve(res.status(400), console.log("The request does not have payment data. Try again"))
+                resolve(res.status(400), console.warn("The request does not have payment data. Try again"))
             }
         } catch(error) {
             if (error instanceof ApiError) {
