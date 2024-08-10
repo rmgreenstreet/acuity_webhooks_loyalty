@@ -74,7 +74,7 @@ const updatedPaymentRequestHandler = async (req, res, next) => {
                     const orderDetails = await ordersApi.retrieveOrder(payment.order_id);
                     console.log("Found order: ", orderDetails.id)
                     if (orderDetails.result.order.tenders[0].type === "CASH") {
-                        throw new ExpressError("This order was cash, not possible to be acuity, it will be skipped", 200)
+                        resolve(res.status(204), console.log("This order was cash, not possible to be acuity, it will be skipped"))
                     }
                     if (orderDetails.result.order.source.name && 
                         orderDetails.result.order.source.name == "Acuity Scheduling") {
