@@ -30,6 +30,7 @@ const addLoyaltyPoints = async (payment) => {
     console.log("entering addLoyaltyPoints")
     return new Promise(async (resolve, reject) => {
         try {
+            console.log("attempting to find loyalty account for: ", payment.customer_id);
             const loyaltyAccount = await loyaltyApi.searchLoyaltyAccounts({
                 query: {
                     customerIds: [payment.customer_id]
