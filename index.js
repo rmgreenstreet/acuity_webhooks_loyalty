@@ -98,7 +98,7 @@ const updatedPaymentRequestHandler = async (req, res, next) => {
                   console.log(e.code);
                   console.log(e.detail);
                 });
-                reject("There was a problem with the API service")
+                reject(res.status(501), console.log("There was a problem with the API service"))
               } else {
                 console.log("Unexpected error occurred: ", error);
                 reject(error);
