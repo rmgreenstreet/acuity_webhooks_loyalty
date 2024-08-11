@@ -38,7 +38,7 @@ const addLoyaltyPoints = async (payment, res) => {
     return new Promise(async (resolve, reject) => {
         try {
             if (!payment.customer_id) {
-                resolve(res.status(200), console.log(warnLogColors, "No customer Id attached to payment"))
+                resolve(console.log(warnLogColors, "No customer Id attached to payment"))
             }
             console.log("attempting to find loyalty account for: ", payment.customer_id);
             const loyaltyAccount = await loyaltyApi.searchLoyaltyAccounts({
@@ -47,10 +47,10 @@ const addLoyaltyPoints = async (payment, res) => {
                 }
             });
             if (Object.keys(loyaltyAccount.result).length === 0) {
-                resolve(res.status(200), console.log(warnLogColors, `Loyalty account not found for payment ${payment.id}`));
+                resolve(console.log(warnLogColors, `Loyalty account not found for payment ${payment.id}`));
             }
             if (typeof loyaltyAccount.result.loyaltyAccounts.id == undefined) {
-                resolve(res.status(200), console.log(warnLogColors, `Loyalty account not found for payment ${payment.id}`));
+                resolve(console.log(warnLogColors, `Loyalty account not found for payment ${payment.id}`));
             }
             console.log(successLogColors, "Found loyalty account: ", loyaltyAccount);
             await loyaltyApi.accumulateLoyaltyPoints(loyaltyAccount.result.loyaltyAccounts.id, {
@@ -88,22 +88,22 @@ const updatedPaymentRequestHandler = async (req, res, next) => {
                     const orderDetails = await ordersApi.retrieveOrder(payment.order_id);
                     console.log(successLogColors, `Found order: ${orderDetails}`)
                     if (orderDetails.result.order.tenders[0].type === "CASH") {
-                        resolve(res.status(200), console.log(warnLogColors, "This order was cash, not possible to be acuity, it will be skipped"))
+                        resolve(console.log(warnLogColors, "This order was cash, not possible to be acuity, it will be skipped"))
                     }
                     if (orderDetails.result.order.source.name && 
                         orderDetails.result.order.source.name == "Acuity Scheduling") {
                             console.log("This order came from Acuity. Attempting to add loyalty points");
                             await addLoyaltyPoints(payment, res).then(() => {
-                                resolve(res.status(200), console.log(successLogColors, "Loyalty points successfully added"), res.send("Loyalty points successfully added"))
+                                resolve(console.log(successLogColors, "Loyalty points successfully added"), res.send("Loyalty points successfully added"))
                             })
                     } else {
-                        resolve(res.status(200), console.log(warnLogColors, "The transaction is not from Acuity Scheduling, it will be skipped"));
+                        resolve(console.log(warnLogColors, "The transaction is not from Acuity Scheduling, it will be skipped"));
                     }
                 } else {
-                    resolve(res.status(200), console.log(warnLogColors, "The transaction has not yet been completed, it will be skipped"));
+                    resolve(console.log(warnLogColors, "The transaction has not yet been completed, it will be skipped"));
                 }
             }  else {
-                resolve(res.status(400), console.log(warnLogColors, "The request does not have payment data. Try again"))
+                resolve(console.log(warnLogColors, "The request does not have payment data. Try again"))
             }
         } catch(error) {
             if (error instanceof ApiError) {
@@ -112,7 +112,7 @@ const updatedPaymentRequestHandler = async (req, res, next) => {
                   console.log(e.code);
                   console.log(e.detail);
                 });
-                reject(res.status(501), console.error(errorLogColors, "There was a problem with the API service"))
+                reject(console.error(errorLogColors, "There was a problem with the API service"))
               } else {
                 console.error(errorLogColors, "Unexpected error occurred: ", error);
                 reject(error);
