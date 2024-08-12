@@ -94,7 +94,7 @@ const updatedPaymentRequestHandler = async (req, res, next) => {
                         orderDetails.result.order.source.name == "Acuity Scheduling") {
                             console.log("This order came from Acuity. Attempting to add loyalty points");
                             await addLoyaltyPoints(payment, res).then(() => {
-                                resolve(console.log(successLogColors, "Loyalty points successfully added"), res.send("Loyalty points successfully added"))
+                                resolve(console.log(successLogColors, "Loyalty points successfully added"))
                             })
                     } else {
                         resolve(console.log(warnLogColors, "The transaction is not from Acuity Scheduling, it will be skipped"));
