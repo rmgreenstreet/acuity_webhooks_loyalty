@@ -121,7 +121,7 @@ const updatedPaymentRequestHandler = async (req, res, next) => {
 app.post("/payment_updated", quickResponse, asyncWrapper(updatedPaymentRequestHandler));
 
 app.all("*", (req, res) => {
-  console.log(req.body);
+  console.log(req);
   res.send("This is not a valid endpoint");
 });
 
