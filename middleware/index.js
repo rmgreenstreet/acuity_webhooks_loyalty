@@ -5,6 +5,7 @@ module.exports = {
         }
     },
     quickResponse: async(req, res, next) => {
+        console.log(req.body);
         const { payment } = req.body.data.object;
         if (payment.payment_id) {
             res.status(202)
