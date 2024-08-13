@@ -6,8 +6,15 @@ const express = require("express");
 const app = express();
 const crypto = require("node:crypto");
 
-const asyncWrapper = require("./utils/asyncWrapper");
-const ExpressError = require("./utils/ExpressError");
+const { asyncWrapper, quickResponse } = require("./middleware");
+const { connectToMongoose, ExpressError } = require("./utils");
+
+const successLogColors = "\x1b[32m"
+const warnLogColors = "\x1b[33m"
+const errorLogColors = "\x1b[31m"
+
+//Connect to Mongoose with an initial 5 second delay before next attempt, if failed
+connectToMongoose(5000);
 
 const { Client, Environment, ApiError } = require("square");
 
@@ -20,18 +27,7 @@ const client = new Client({
 
 const { loyaltyApi, ordersApi } = client;
 
-const successLogColors = "\x1b[32m"
-const warnLogColors = "\x1b[33m"
-const errorLogColors = "\x1b[31m"
-
 app.use(express.json())
-
-
-const quickResponse = async(req, res, next) => {
-    res.status(200)
-    res.send("Request Received");
-    next();
-}
 
 const addLoyaltyPoints = async (payment, res) => {
     console.log("entering addLoyaltyPoints")
