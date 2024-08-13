@@ -7,8 +7,19 @@ const app = express();
 const crypto = require("node:crypto");
 const { Client, Environment, ApiError } = require("square");
 
+// Set up Square API client
+const client = new Client({
+  bearerAuthCredentials: {
+    accessToken: process.env.SQUARE_ACCESS_TOKEN
+  },
+environment: Environment.Production,
+});
+
+const { loyaltyApi, ordersApi } = client;
+
 const { asyncWrapper, quickResponse } = require("./middleware");
 const { connectToMongoose, ExpressError } = require("./utils");
+const ProcessedInfo = require("./models/processedInfo");
 
 const successLogColors = "\x1b[32m"
 const warnLogColors = "\x1b[33m"
@@ -16,16 +27,6 @@ const errorLogColors = "\x1b[31m"
 
 //Connect to Mongoose with an initial 5 second delay before next attempt, if failed
 // connectToMongoose(5000);
-
-
-const client = new Client({
-    bearerAuthCredentials: {
-      accessToken: process.env.SQUARE_ACCESS_TOKEN
-    },
-  environment: Environment.Production,
-});
-
-const { loyaltyApi, ordersApi } = client;
 
 app.use(express.json())
 

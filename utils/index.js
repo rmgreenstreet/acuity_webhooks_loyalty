@@ -15,7 +15,7 @@ module.exports = {
     connectToMongoose: (delay) => {
         attempts++;
         
-        mongoose.connect(`mongodb://localhost:27017/${process.env.DATABASE_NAME}`, { useNewUrlParser: true, useUnifiedTopology: true })
+        mongoose.connect(process.env.DATABASE_URL)
           .then(() => {
               console.log(`Mongoose Connected to ${process.env.DATABASE_NAME} in MongoDB`);
           })
