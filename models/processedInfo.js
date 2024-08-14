@@ -33,17 +33,17 @@ const LoyaltyAccountSchema = new Schema({
 
 const ProcessedInfoSchema = new Schema({
     payment: PaymentObjectSchema,
+    customer_firstName: String,
+    customer_lastName: String,
     loyalty_account: {
         type: LoyaltyAccountSchema
     },
-    customer_firstName: String,
-    customer_lastName: String,
     result: {
         status: {
             enum: ["COMPLETED", "FAILED"]
         },
         reason: {
-            enum: ["Not From Acuity", "No Loyalty Account", "Transaction Not Yet Completed", "No Customer ID"]
+            enum: ["Points Successfully Added", "Not From Acuity", "No Loyalty Account", "Transaction Not Yet Completed", "No Customer ID", "Unknown Error"]
         }
     }
 })
