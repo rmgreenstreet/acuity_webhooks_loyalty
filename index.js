@@ -190,7 +190,7 @@ const updatedPaymentRequestHandler = async (req, res, next) => {
 app.post("/payment_updated", quickResponse, asyncWrapper(updatedPaymentRequestHandler));
 
 app.all("*", (req, res) => {
-  // console.log(req);
+  console.log("* endpoint catcher reached");
   res.send("This is not a valid endpoint");
 });
 
