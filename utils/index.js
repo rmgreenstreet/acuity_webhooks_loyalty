@@ -17,7 +17,7 @@ module.exports = {
         
         mongoose.connect(process.env.DATABASE_URL)
           .then(() => {
-              console.log(`Mongoose Connected to ${process.env.DATABASE_NAME} in MongoDB`);
+              console.log(`Mongoose Connected to ${process.env.DATABASE_URL} in MongoDB`);
           })
           .catch((err) => {
             console.error(`Failed to connect to MongoDB (attempt ${attempts}): ${err.message}`);

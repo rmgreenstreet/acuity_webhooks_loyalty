@@ -26,7 +26,7 @@ const warnLogColors = "\x1b[33m"
 const errorLogColors = "\x1b[31m"
 
 //Connect to Mongoose with an initial 5 second delay before next attempt, if failed
-// connectToMongoose(5000);
+connectToMongoose(5000);
 
 app.use(express.json())
 
@@ -37,6 +37,14 @@ const addLoyaltyPoints = async (payment, res) => {
             if (!payment.customer_id) {
                 resolve(console.log(warnLogColors, "No customer Id attached to payment"))
             }
+            let transactionInfo = new ProcessedInfo({
+              payment: {
+                id: payment.id,
+                status: payment.status,
+                location_id: location_id,
+                order_id: payment.order_id
+              }
+            })
             console.log("attempting to find loyalty account for: ", payment.customer_id);
             const loyaltyAccount = await loyaltyApi.searchLoyaltyAccounts({
                 query: {

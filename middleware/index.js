@@ -1,3 +1,5 @@
+const Incoming = require("../models/incoming");
+
 module.exports = {
     asyncWrapper: (fn) => {
         return (req, res, next) => {
@@ -9,6 +11,7 @@ module.exports = {
         if (payment.id) {
             res.status(202)
             res.send("Request Received");
+            await new Incoming({payment_id: payment.id}).save();
             next();
         } else {
             res.status(404)
