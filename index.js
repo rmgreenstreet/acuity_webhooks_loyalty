@@ -26,7 +26,7 @@ const warnLogColors = "\x1b[33m"
 const errorLogColors = "\x1b[31m"
 
 //Connect to Mongoose with an initial 5 second delay before next attempt, if failed
-// connectToMongoose(5000);
+connectToMongoose(5000);
 
 app.use(express.json())
 
