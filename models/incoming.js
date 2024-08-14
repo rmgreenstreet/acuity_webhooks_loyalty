@@ -5,6 +5,11 @@ const IncomingSchema = new Schema({
     payment_id: {
         type: String,
         required: true
+    },
+    received: {
+        type: Date,
+        required: true,
+        default: Date.now()
     }
 });
 
