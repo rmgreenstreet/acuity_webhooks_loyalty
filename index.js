@@ -18,7 +18,7 @@ environment: Environment.Production,
 const { loyaltyApi, ordersApi, customersApi } = client;
 
 const { asyncWrapper, quickResponse } = require("./middleware");
-// const { connectToMongoose, ExpressError } = require("./utils");
+const { connectToMongoose, ExpressError } = require("./utils");
 const ProcessedInfo = require("./models/processedInfo");
 
 const successLogColors = "\x1b[32m"
