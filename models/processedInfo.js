@@ -33,8 +33,8 @@ const LoyaltyAccountSchema = new Schema({
 
 const ProcessedInfoSchema = new Schema({
     payment: PaymentObjectSchema,
-    customer_firstName: String,
-    customer_lastName: String,
+    given_name: String,
+    family_name: String,
     loyalty_account: {
         type: LoyaltyAccountSchema
     },

@@ -15,7 +15,7 @@ const client = new Client({
 environment: Environment.Production,
 });
 
-const { loyaltyApi, ordersApi } = client;
+const { loyaltyApi, ordersApi, customersApi } = client;
 
 const { asyncWrapper, quickResponse } = require("./middleware");
 const { connectToMongoose, ExpressError } = require("./utils");
@@ -43,7 +43,11 @@ const addLoyaltyPoints = async (payment, transactionInfo,) => {
                 resolve(console.log(warnLogColors, "No customer Id attached to payment"))
               })
             }
-            console.log("attempting to find loyalty account for: ", payment.customer_id);
+            console.log("Attempting to find customer with ID ", payment.customer_id);
+            const { customer } = await customersApi.retrieveCustomer(payment.customer_id);
+            if (customer.given_name) {transactionInfo.given_name = customer.given_name}
+            if (customer.family_name) {transactionInfo.family_name = customer.family_name}
+            console.log("Customer found and Recorded. Attempting to find loyalty account for: ", customer.given_name, customer.family_name);
             const loyaltyAccount = await loyaltyApi.searchLoyaltyAccounts({
                 query: {
                     customerIds: [payment.customer_id]
@@ -60,13 +64,20 @@ const addLoyaltyPoints = async (payment, transactionInfo,) => {
               })
             }
             console.log(successLogColors, "Found loyalty account: ", loyaltyAccount);
-            await loyaltyApi.accumulateLoyaltyPoints(loyaltyAccount.result.loyaltyAccounts.id, {
+            let updatedLoyaltyAccount = await loyaltyApi.accumulateLoyaltyPoints(loyaltyAccount.result.loyaltyAccounts.id, {
                 accumulatePoints: {
                     orderId: payment.order_id
                 },
                 locationId: payment.location_id,
                 idempotencyKey: crypto.randomUUID()
             }).then(async () => {
+              transactionInfo.loyalty_account = {
+                id: loyaltyAccount.id,
+                balance: updatedLoyaltyAccount.balance,
+                lifetime_points: updatedLoyaltyAccount.lifetime_points,
+                created_at: loyaltyAccount.created_at,
+                updated_at: Date.now()
+              }
               transactionInfo.result = {
                 status: "COMPLETED",
                 reason: "Points Successfully Added"
