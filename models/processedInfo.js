@@ -27,18 +27,17 @@ const LoyaltyAccountSchema = new Schema({
     created_at: String,
     updated_at: {
         type: Date,
-        required: true,
         default: Date.now()
     }
 });
 
 const ProcessedInfoSchema = new Schema({
     payment: PaymentObjectSchema,
-    customer_firstName: String,
-    customer_lastName: String,
     loyalty_account: {
         type: LoyaltyAccountSchema
     },
+    customer_firstName: String,
+    customer_lastName: String,
     result: {
         status: {
             enum: ["COMPLETED", "FAILED"]

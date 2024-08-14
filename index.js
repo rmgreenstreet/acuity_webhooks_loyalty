@@ -54,7 +54,7 @@ const addLoyaltyPoints = async (payment, res) => {
             if (Object.keys(loyaltyAccount.result).length === 0) {
                 resolve(console.log(warnLogColors, `Loyalty account not found for payment ${payment.id}`));
             }
-            if (typeof loyaltyAccount.result.loyaltyAccounts.id == undefined) {
+            if (typeof loyaltyAccount.result.loyaltyAccounts == undefined) {
                 resolve(console.log(warnLogColors, `Loyalty account not found for payment ${payment.id}`));
             }
             console.log(successLogColors, "Found loyalty account: ", loyaltyAccount);
