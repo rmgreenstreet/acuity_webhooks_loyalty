@@ -118,7 +118,7 @@ const updatedPaymentRequestHandler = async (req, res, next) => {
                   payment: {
                     id: payment.id,
                     status: payment.status,
-                    location_id: location_id,
+                    location_id: payment.location_id,
                     order_id: payment.order_id
                   }
                 });
