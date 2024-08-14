@@ -184,72 +184,16 @@ const updatedPaymentRequestHandler = async (req, res, next) => {
               }
         }
     });
+    return;
 }
 
 app.post("/payment_updated", quickResponse, asyncWrapper(updatedPaymentRequestHandler));
 
 app.all("*", (req, res) => {
-  console.log(req);
+  // console.log(req);
   res.send("This is not a valid endpoint");
 });
 
 app.listen(process.env.PORT, () => {
     console.log("Server listening on port ", process.env.PORT);
 });
-
-
-const payment = 
-
-{
-    amount_money: { amount: 8748, currency: 'USD' },
-    application_details: {
-      application_id: 'sq0idp-nbWhEGaLnDZMLNI1dVakNw',
-      square_product: 'ECOMMERCE_API'
-    },
-    approved_money: { amount: 8748, currency: 'USD' },
-    card_details: {
-      auth_result_code: '901925',
-      avs_status: 'AVS_ACCEPTED',
-      card: {
-        bin: '442521',
-        card_brand: 'VISA',
-        card_type: 'DEBIT',
-        exp_month: 7,
-        exp_year: 2029,
-        fingerprint: 'sq-1-4tNQMXqPV3zn3WTjTjqdNQgcooT07mZ5Yar-0gfFjxTKO8nh7w3VGdc68rqHlRdfcw',
-        last_4: '0601',
-        prepaid_type: 'NOT_PREPAID'
-      },
-      card_payment_timeline: {
-        authorized_at: '2024-08-10T13:57:05.677Z',
-        captured_at: '2024-08-10T13:57:05.981Z'
-      },
-      cvv_status: 'CVV_NOT_CHECKED',
-      entry_method: 'KEYED',
-      statement_description: 'SQ *TOPEKA CAT CAFE',
-      status: 'CAPTURED'
-    },
-    created_at: '2024-08-10T13:57:05.097Z',
-    delay_action: 'CANCEL',
-    delay_duration: 'PT168H',
-    delayed_until: '2024-08-17T13:57:05.097Z',
-    id: 'L5WyGeDEA6HCeHP8GtPuyRl7NPQZY',
-    location_id: 'LGAKPKKGR240K',
-    note: '1311547236 - Bethany Weber - 50 Min. Kitten Room Visit - August 10, 2024 1:00pm | 1311547237 - Bethany Weber - 50 Min. Kitten Room Visit - August 10, 2024 1:00pm | 1311547238 - Bethany Weber - 50 Min. Kitten Room Visit - August 10, 2024 1:00pm | 1311547239 - Bethany Weber - 50 Min. Kitten Room Visit - August 10, 2024 1:00pm',
-    order_id: '3kpF3eCJjfs44TzgYEmRsfQKXpWZY',
-    processing_fee: [
-      {
-        amount_money: [Object],
-        effective_at: '2024-08-10T15:57:07.000Z',
-        type: 'INITIAL'
-      }
-    ],
-    receipt_number: 'L5Wy',
-    receipt_url: 'https://squareup.com/receipt/preview/L5WyGeDEA6HCeHP8GtPuyRl7NPQZY',
-    risk_evaluation: { created_at: '2024-08-10T13:57:05.885Z', risk_level: 'NORMAL' },
-    source_type: 'CARD',
-    status: 'COMPLETED',
-    total_money: { amount: 8748, currency: 'USD' },
-    updated_at: '2024-08-10T13:57:09.394Z',
-    version: 5
-  }
