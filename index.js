@@ -76,14 +76,14 @@ const addLoyaltyPoints = async (payment, transactionInfo,) => {
                 balance: updatedLoyaltyAccount.balance,
                 lifetime_points: updatedLoyaltyAccount.lifetime_points,
                 created_at: loyaltyAccount.created_at,
-                updated_at: Date.now()
+                updated_at: updatedLoyaltyAccount.updated_at
               }
               transactionInfo.result = {
                 status: "COMPLETED",
                 reason: "Points Successfully Added"
               }
               await transactionInfo.save().then(()=> {
-                resolve(`Successfully added points to loyalty account ${loyaltyAccount.id} for transaction ${order.id}`)
+                resolve(`Successfully added points to ${customer.given_name} ${customer.family_name} for transaction ${order.id}`)
               })
             })
 
