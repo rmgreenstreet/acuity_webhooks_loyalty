@@ -101,7 +101,7 @@ const addLoyaltyPoints = async (payment, transactionInfo) => {
 
       transactionInfo.result = {
           status: "FAILED",
-          reason: error.message
+          reason: error.detail
       };
       await transactionInfo.save();
   }
@@ -125,8 +125,16 @@ const updatedPaymentRequestHandler = async (req, res, next) => {
           console.log(successLogColors, "Payment detected: ", payment.id);
 
           if (payment.status === "COMPLETED") {
-              console.log("Finding the corresponding order");
-              const orderDetails = await ordersApi.retrieveOrder(payment.order_id);
+              console.log("Finding the corresponding order: ", payment.order_id);
+              const orderDetails = await ordersApi.retrieveOrder(payment.order_id).catch(async (error) => {
+                transactionInfo.result = {
+                  status: "Failed",
+                  reason: error.detail
+                }
+                await transactionInfo.save();
+                console.log(warnLogColors, error.detail);
+                return; // Exit the function without doing anything further
+            });
               console.log(successLogColors, `Found order: ${orderDetails}`);
 
               if (orderDetails.result.order.tenders[0].type === "CASH") {
