@@ -129,13 +129,13 @@ const updatedPaymentRequestHandler = async (req, res, next) => {
           if (payment.status === "COMPLETED") {
               console.log("Finding the corresponding order: ", payment.order_id);
               const orderDetails = await ordersApi.retrieveOrder(payment.order_id).catch(async (error) => {
-                console.log(error.body.errors);
+                console.log(error.body);
                 transactionInfo.result = {
                   status: "FAILED",
-                  reason: error.body.errors
+                  reason: error.body
                 }
                 await transactionInfo.save().then((error) => {
-                  console.log(errorLogColors, error.body.errors);
+                  console.log(errorLogColors, error.body);
                   return; 
                 })
             });
