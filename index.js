@@ -38,7 +38,9 @@ const addLoyaltyPoints = async (payment, transactionInfo) => {
               status: "FAILED",
               reason: "No Customer ID"
           };
-          transactionInfo.save();
+          console.log("About to save transaction info");
+          await transactionInfo.save();
+          console.log("This should run after saving transactionInfo")
           console.log(warnLogColors, "No customer ID attached to payment");
           return;
       }
@@ -61,7 +63,9 @@ const addLoyaltyPoints = async (payment, transactionInfo) => {
               status: "FAILED",
               reason: "No Loyalty Account"
           };
-          transactionInfo.save();
+          console.log("About to save transaction info");
+          await transactionInfo.save();
+          console.log("This should run after saving transactionInfo")
           console.log(warnLogColors, `Loyalty account not found for payment ${payment.id}`);
           return;
       }
@@ -89,7 +93,9 @@ const addLoyaltyPoints = async (payment, transactionInfo) => {
           status: "COMPLETED",
           reason: "Points Successfully Added"
       };
-      transactionInfo.save();
+      console.log("About to save transaction info");
+      await transactionInfo.save();
+      console.log("This should run after saving transactionInfo")
       console.log(successLogColors, `Successfully added points to ${customer.given_name} ${customer.family_name} for transaction ${payment.order_id}`);
       return;
   } catch (error) {
@@ -105,7 +111,9 @@ const addLoyaltyPoints = async (payment, transactionInfo) => {
           status: "FAILED",
           reason: error.detail
       };
-      transactionInfo.save();
+      console.log("About to save transaction info");
+      await transactionInfo.save();
+      console.log("This should run after saving transactionInfo")
       return;
   }
 };
@@ -134,7 +142,9 @@ const updatedPaymentRequestHandler = async (req, res, next) => {
                   status: "FAILED",
                   reason: error.body
                 }
-                transactionInfo.save()
+                console.log("About to save transaction info");
+                await transactionInfo.save();
+                console.log("This should run after saving transactionInfo")
                 console.log(errorLogColors, "No order found")
                 return; 
             });
@@ -144,7 +154,9 @@ const updatedPaymentRequestHandler = async (req, res, next) => {
                 status: "FAILED",
                 reason: "No order found"
               }
-              transactionInfo.save()
+              console.log("About to save transaction info");
+              await transactionInfo.save();
+              console.log("This should run after saving transactionInfo")
               
               console.log(errorLogColors, "Error finding order ", payment.order_id);
               console.log("returning now because no order found")
@@ -157,7 +169,9 @@ const updatedPaymentRequestHandler = async (req, res, next) => {
                       status: "FAILED",
                       reason: "Not From Acuity"
                   };
-                  transactionInfo.save();
+                  console.log("About to save transaction info");
+                  await transactionInfo.save();
+                  console.log("This should run after saving transactionInfo")
                   console.log(warnLogColors, "This order was cash, not possible to be from Acuity. It will be skipped.");
                   return;
               }
@@ -172,7 +186,9 @@ const updatedPaymentRequestHandler = async (req, res, next) => {
                       status: "FAILED",
                       reason: "Not From Acuity"
                   };
-                  transactionInfo.save();
+                  console.log("About to save transaction info");
+                  await transactionInfo.save();
+                  console.log("This should run after saving transactionInfo")
                   console.log(warnLogColors, "The transaction is not from Acuity Scheduling. It will be skipped.");
                   return;
               }
@@ -181,7 +197,9 @@ const updatedPaymentRequestHandler = async (req, res, next) => {
                   status: "FAILED",
                   reason: "Transaction Not Yet Completed"
               };
-              transactionInfo.save();
+              console.log("About to save transaction info");
+              await transactionInfo.save();
+              console.log("This should run after saving transactionInfo")
               console.log(warnLogColors, "The transaction has not yet been completed. It will be skipped.");
               return;
           }
