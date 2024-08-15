@@ -30,162 +30,149 @@ connectToMongoose(5000);
 
 app.use(express.json())
 
-const addLoyaltyPoints = async (payment, transactionInfo,) => {
-    console.log("entering addLoyaltyPoints")
-    return new Promise(async (resolve, reject) => {
-        try {
-            if (!payment.customer_id) {
-              transactionInfo.result = {
-                status: "FAILED",
-                reason: "No Customer ID"
-              }
-              await transactionInfo.save().then(() => {
-                resolve(console.log(warnLogColors, "No customer Id attached to payment"))
-              })
-            }
-            console.log("Attempting to find customer with ID ", payment.customer_id);
-            const { customer } = await customersApi.retrieveCustomer(payment.customer_id);
-            if (customer.given_name) {transactionInfo.given_name = customer.given_name}
-            if (customer.family_name) {transactionInfo.family_name = customer.family_name}
-            console.log("Customer found and Recorded. Attempting to find loyalty account for: ", customer.given_name, customer.family_name);
-            const loyaltyAccount = await loyaltyApi.searchLoyaltyAccounts({
-                query: {
-                    customerIds: [payment.customer_id]
-                }
-            });
-            if (Object.keys(loyaltyAccount.result).length === 0) {
-              
-              transactionInfo.result = {
-                status: "FAILED",
-                reason: "No Loyalty Account"
-              }
-              await transactionInfo.save().then(() => {
-                resolve(console.log(warnLogColors, `Loyalty account not found for payment ${payment.id}`));
-              })
-            }
-            console.log(successLogColors, "Found loyalty account: ", loyaltyAccount);
-            let updatedLoyaltyAccount = await loyaltyApi.accumulateLoyaltyPoints(loyaltyAccount.result.loyaltyAccounts.id, {
-                accumulatePoints: {
-                    orderId: payment.order_id
-                },
-                locationId: payment.location_id,
-                idempotencyKey: crypto.randomUUID()
-            }).then(async () => {
-              transactionInfo.loyalty_account = {
-                id: loyaltyAccount.id,
-                balance: updatedLoyaltyAccount.balance,
-                lifetime_points: updatedLoyaltyAccount.lifetime_points,
-                created_at: loyaltyAccount.created_at,
-                updated_at: updatedLoyaltyAccount.updated_at
-              }
-              transactionInfo.result = {
-                status: "COMPLETED",
-                reason: "Points Successfully Added"
-              }
-              await transactionInfo.save().then(()=> {
-                resolve(`Successfully added points to ${customer.given_name} ${customer.family_name} for transaction ${order.id}`)
-              })
-            })
-
-            
-        } catch (error) {if (error instanceof ApiError) {
-            error.result.errors.forEach(function (e) {
-              console.log(e.category);
-              console.log(e.code);
-              console.log(e.detail);
-            });
-          } else {
-            console.log(errorLogColors, "Unexpected error occurred: ", error);
-          }
+const addLoyaltyPoints = async (payment, transactionInfo) => {
+  console.log("Entering addLoyaltyPoints");
+  try {
+      if (!payment.customer_id) {
           transactionInfo.result = {
-            status: "FAILED",
-            reason: error.message
+              status: "FAILED",
+              reason: "No Customer ID"
+          };
+          await transactionInfo.save();
+          console.log(warnLogColors, "No customer ID attached to payment");
+          return;
+      }
+
+      console.log("Attempting to find customer with ID", payment.customer_id);
+      const { customer } = await customersApi.retrieveCustomer(payment.customer_id);
+      if (customer.given_name) transactionInfo.given_name = customer.given_name;
+      if (customer.family_name) transactionInfo.family_name = customer.family_name;
+
+      console.log("Customer found. Attempting to find loyalty account for:", customer.given_name, customer.family_name);
+      const loyaltyAccountResponse = await loyaltyApi.searchLoyaltyAccounts({
+          query: {
+              customerIds: [payment.customer_id]
           }
-          await transactionInfo.save().then(() => {
-            reject(error);
-          })
-        }
-    })
-}
+      });
+
+      if (loyaltyAccountResponse.result.loyaltyAccounts.length === 0) {
+          transactionInfo.result = {
+              status: "FAILED",
+              reason: "No Loyalty Account"
+          };
+          await transactionInfo.save();
+          console.log(warnLogColors, `Loyalty account not found for payment ${payment.id}`);
+          return;
+      }
+
+      const loyaltyAccount = loyaltyAccountResponse.result.loyaltyAccounts[0];
+      console.log(successLogColors, "Found loyalty account:", loyaltyAccount);
+
+      const updatedLoyaltyAccount = await loyaltyApi.accumulateLoyaltyPoints(loyaltyAccount.id, {
+          accumulatePoints: {
+              orderId: payment.order_id
+          },
+          locationId: payment.location_id,
+          idempotencyKey: crypto.randomUUID()
+      });
+
+      transactionInfo.loyalty_account = {
+          id: loyaltyAccount.id,
+          balance: updatedLoyaltyAccount.result.loyaltyAccount.balance,
+          lifetime_points: updatedLoyaltyAccount.result.loyaltyAccount.lifetimePoints,
+          created_at: loyaltyAccount.createdAt,
+          updated_at: updatedLoyaltyAccount.result.loyaltyAccount.updatedAt
+      };
+
+      transactionInfo.result = {
+          status: "COMPLETED",
+          reason: "Points Successfully Added"
+      };
+      await transactionInfo.save();
+      console.log(successLogColors, `Successfully added points to ${customer.given_name} ${customer.family_name} for transaction ${payment.order_id}`);
+  } catch (error) {
+      if (error instanceof ApiError) {
+          error.result.errors.forEach(e => {
+              console.log(e.category, e.code, e.detail);
+          });
+      } else {
+          console.error(errorLogColors, "Unexpected error occurred:", error);
+      }
+
+      transactionInfo.result = {
+          status: "FAILED",
+          reason: error.message
+      };
+      await transactionInfo.save();
+  }
+};
+
 
 const updatedPaymentRequestHandler = async (req, res, next) => {
-    console.log("Received payment update notification")
-    return new Promise(async (resolve, reject) => {
-        try {
-            if (req.body) {
-                const { payment } = req.body.data.object;
-                let transactionInfo = new ProcessedInfo({
-                  payment: {
-                    id: payment.id,
-                    status: payment.status,
-                    location_id: payment.location_id,
-                    order_id: payment.order_id
-                  }
-                });
-                console.log(successLogColors, "Payment detected: ", payment.id);
-                if (payment.status === "COMPLETED") {
-                    console.log("Finding the corresponding order")
-                    const orderDetails = await ordersApi.retrieveOrder(payment.order_id);
-                    console.log(successLogColors, `Found order: ${orderDetails}`)
-                    if (orderDetails.result.order.tenders[0].type === "CASH") {
-                      transactionInfo.result = {
-                        status: "FAILED",
-                        reason: "Not From Acuity"
-                      }
-                      transactionInfo.save().then(
-                        resolve(console.log(warnLogColors, "This order was cash, not possible to be acuity, it will be skipped"))
-                      )
-                    }
-                    if (orderDetails.result.order.source.name && 
-                        orderDetails.result.order.source.name == "Acuity Scheduling") {
-                            console.log("This order came from Acuity. Attempting to add loyalty points");
-                            await addLoyaltyPoints(payment, transactionInfo).then(() => {
-                                resolve(console.log(successLogColors, "Loyalty points successfully added"))
-                            })
-                    } else {
-                      transactionInfo.result = {
-                        status: "FAILED",
-                        reason: "Not From Acuity"
-                      }
-                      await transactionInfo.save().then(() => {
-                        resolve(console.log(warnLogColors, "The transaction is not from Acuity Scheduling, it will be skipped"))
-                      })
-                    }
-                } else {
+  console.log("Received payment update notification");
+
+  try {
+      if (req.body) {
+          const { payment } = req.body.data.object;
+          let transactionInfo = new ProcessedInfo({
+              payment: {
+                  id: payment.id,
+                  status: payment.status,
+                  location_id: payment.location_id,
+                  order_id: payment.order_id
+              }
+          });
+          console.log(successLogColors, "Payment detected: ", payment.id);
+
+          if (payment.status === "COMPLETED") {
+              console.log("Finding the corresponding order");
+              const orderDetails = await ordersApi.retrieveOrder(payment.order_id);
+              console.log(successLogColors, `Found order: ${orderDetails}`);
+
+              if (orderDetails.result.order.tenders[0].type === "CASH") {
                   transactionInfo.result = {
-                    status: "FAILED",
-                    reason: "Transaction Not Yet Completed"
-                  }
-                  await transactionInfo.save().then(() => {
-                    resolve(console.log(warnLogColors, "The transaction has not yet been completed, it will be skipped"))
-                  })
-                }
-            }  else {
-              transactionInfo.result = {
-                status: "FAILED",
-                reason: "Transaction Not Yet Completed"
+                      status: "FAILED",
+                      reason: "Not From Acuity"
+                  };
+                  await transactionInfo.save();
+                  console.log(warnLogColors, "This order was cash, not possible to be from Acuity. It will be skipped.");
+                  return; // Exit the function without doing anything further
               }
-              await transactionInfo.save().then(() => {
-                resolve(console.log(warnLogColors, "The request does not have payment data. Try again"))
-              })
-                
-            }
-        } catch(error) {
-            if (error instanceof ApiError) {
-                error.result.errors.forEach(function (e) {
-                  console.log(e.category);
-                  console.log(e.code);
-                  console.log(e.detail);
-                });
-                reject(console.error(errorLogColors, "There was a problem with the API service"))
+
+              if (orderDetails.result.order.source.name === "Acuity Scheduling") {
+                  console.log("This order came from Acuity. Attempting to add loyalty points");
+                  await addLoyaltyPoints(payment, transactionInfo);
+                  console.log(successLogColors, "Loyalty points successfully added");
               } else {
-                console.error(errorLogColors, "Unexpected error occurred: ", error);
-                reject(error);
+                  transactionInfo.result = {
+                      status: "FAILED",
+                      reason: "Not From Acuity"
+                  };
+                  await transactionInfo.save();
+                  console.log(warnLogColors, "The transaction is not from Acuity Scheduling. It will be skipped.");
               }
-        }
-        return;
-    });
-}
+          } else {
+              transactionInfo.result = {
+                  status: "FAILED",
+                  reason: "Transaction Not Yet Completed"
+              };
+              await transactionInfo.save();
+              console.log(warnLogColors, "The transaction has not yet been completed. It will be skipped.");
+          }
+      } else {
+          console.log(warnLogColors, "The request does not have payment data. Try again.");
+      }
+  } catch (error) {
+      if (error instanceof ApiError) {
+          error.result.errors.forEach(e => {
+              console.log(e.category, e.code, e.detail);
+          });
+      } else {
+          console.error(errorLogColors, "Unexpected error occurred: ", error);
+      }
+  }
+};
+
 
 app.post("/payment_updated", quickResponse, asyncWrapper(updatedPaymentRequestHandler));
 
