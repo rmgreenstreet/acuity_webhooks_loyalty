@@ -138,11 +138,12 @@ const updatedPaymentRequestHandler = async (req, res, next) => {
           if (payment.status === "COMPLETED") {
               console.log("Finding the corresponding order: ", payment.order_id);
               const orderDetails = await ordersApi.retrieveOrder(payment.order_id).catch(async (error) => {
+                console.log("entering retrieveOrder catch method");
                 transactionInfo.result = {
                   status: "FAILED",
                   reason: error.body
                 }
-                console.log("About to save transaction info");
+                console.log("About to save transaction info: ", transactionInfo);
                 await transactionInfo.save();
                 console.log("This should run after saving transactionInfo")
                 console.log(errorLogColors, "No order found")
