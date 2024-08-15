@@ -230,7 +230,7 @@ app.get('/health', (req, res) => {
 });
 
 app.all('*', (req, res) => {
-    console.log(`Request received for unknown path: ${req.path}`);
+    console.log(`Request received for invalid path: ${req.path}`);
     res.status(404).send('This is not a valid endpoint');
 });
 
