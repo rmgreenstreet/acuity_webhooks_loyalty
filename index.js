@@ -131,12 +131,23 @@ const updatedPaymentRequestHandler = async (req, res, next) => {
               const orderDetails = await ordersApi.retrieveOrder(payment.order_id).catch(async (error) => {
                 transactionInfo.result = {
                   status: "FAILED",
-                  reason: error
+                  reason: error.body.details
                 }
-                await transactionInfo.save();
-                console.log(warnLogColors, error);
-                return; 
+                await transactionInfo.save().then(() => {
+                  console.log(errorLogColors, error.body.details);
+                  return; 
+                })
             });
+            if (!orderDetails.result) {
+              transactionInfo.result = {
+                status: "FAILED",
+                reason: "No transaction found"
+              }
+              await transactionInfo.save().then(() => {
+                console.log(errorLogColors, "Error finding transaction ", payment.order_id);
+                return; 
+              })
+            }
               console.log(successLogColors, `Found order: ${orderDetails}`);
 
               if (orderDetails.result.order.tenders[0].type === "CASH") {
