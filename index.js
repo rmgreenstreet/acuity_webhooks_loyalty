@@ -122,7 +122,7 @@ const updatedPaymentRequestHandler = async (req, res, next) => {
                     order_id: payment.order_id
                   }
                 });
-                console.log(successLogColors, "Payment detected: ", payment);
+                console.log(successLogColors, "Payment detected: ", payment.id);
                 if (payment.status === "COMPLETED") {
                     console.log("Finding the corresponding order")
                     const orderDetails = await ordersApi.retrieveOrder(payment.order_id);
