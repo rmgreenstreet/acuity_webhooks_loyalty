@@ -43,10 +43,7 @@ const ProcessedInfoSchema = new Schema({
             type: String,
             enum: ["COMPLETED", "FAILED"]
         },
-        reason: {
-            type: String,
-            enum: ["Points Successfully Added", "Not From Acuity", "No Loyalty Account", "Transaction Not Yet Completed", "No Customer ID", "Unknown Error"]
-        }
+        reason: String
     }
 })
 
