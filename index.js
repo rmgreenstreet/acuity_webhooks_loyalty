@@ -187,7 +187,7 @@ const updatedPaymentRequestHandler = async (req, res, next) => {
                         console.log("entering retrieveOrder catch method");
                         transactionInfo.result = {
                             status: "FAILED",
-                            reason: error.body
+                            reason: error
                         }
                         console.log("About to save transaction info: ", transactionInfo);
                         await transactionInfo.save();
