@@ -134,8 +134,9 @@ const updatedPaymentRequestHandler = async (req, res, next) => {
                   status: "FAILED",
                   reason: error.body
                 }
-                await transactionInfo.save().then((error) => {
-                  console.log(errorLogColors, error.body);
+                console.log(errorLogColors, error.body);
+                await transactionInfo.save().then(() => {
+                  console.log(errorLogColors, "No order found")
                   return; 
                 })
             });
