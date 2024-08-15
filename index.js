@@ -203,9 +203,14 @@ const updatedPaymentRequestHandler = async (req, res, next) => {
 
 app.post("/payment_updated", quickResponse, asyncWrapper(updatedPaymentRequestHandler));
 
-app.all("*", (req, res) => {
-  console.log("* endpoint catcher reached");
-  res.send("This is not a valid endpoint");
+app.get('/health', (req, res) => {
+    console.log("Health check initiated")
+    res.status(200).send('OK');
+});
+
+app.all('*', (req, res) => {
+    console.log(`Request received for unknown path: ${req.path}`);
+    res.status(404).send('This is not a valid endpoint');
 });
 
 app.listen(process.env.PORT, () => {
