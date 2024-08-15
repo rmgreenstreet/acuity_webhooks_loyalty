@@ -38,7 +38,7 @@ const addLoyaltyPoints = async (payment, transactionInfo) => {
               status: "FAILED",
               reason: "No Customer ID"
           };
-          await transactionInfo.save();
+          transactionInfo.save();
           console.log(warnLogColors, "No customer ID attached to payment");
           return;
       }
@@ -61,7 +61,7 @@ const addLoyaltyPoints = async (payment, transactionInfo) => {
               status: "FAILED",
               reason: "No Loyalty Account"
           };
-          await transactionInfo.save();
+          transactionInfo.save();
           console.log(warnLogColors, `Loyalty account not found for payment ${payment.id}`);
           return;
       }
@@ -89,7 +89,7 @@ const addLoyaltyPoints = async (payment, transactionInfo) => {
           status: "COMPLETED",
           reason: "Points Successfully Added"
       };
-      await transactionInfo.save();
+      transactionInfo.save();
       console.log(successLogColors, `Successfully added points to ${customer.given_name} ${customer.family_name} for transaction ${payment.order_id}`);
       return;
   } catch (error) {
@@ -105,7 +105,7 @@ const addLoyaltyPoints = async (payment, transactionInfo) => {
           status: "FAILED",
           reason: error.detail
       };
-      await transactionInfo.save();
+      transactionInfo.save();
       return;
   }
 };
@@ -130,26 +130,23 @@ const updatedPaymentRequestHandler = async (req, res, next) => {
           if (payment.status === "COMPLETED") {
               console.log("Finding the corresponding order: ", payment.order_id);
               const orderDetails = await ordersApi.retrieveOrder(payment.order_id).catch(async (error) => {
-                console.log(error.body);
                 transactionInfo.result = {
                   status: "FAILED",
                   reason: error.body
                 }
-                console.log(errorLogColors, error.body);
-                await transactionInfo.save().then(() => {
-                  console.log(errorLogColors, "No order found")
-                  return; 
-                })
+                transactionInfo.save()
+                console.log(errorLogColors, "No order found")
+                return; 
             });
             if (typeof orderDetails === undefined) {
               transactionInfo.result = {
                 status: "FAILED",
-                reason: "No transaction found"
+                reason: "No order found"
               }
-              await transactionInfo.save().then(() => {
-                console.log(errorLogColors, "Error finding transaction ", payment.order_id);
-                return; 
-              })
+              transactionInfo.save()
+              
+              console.log(errorLogColors, "Error finding order ", payment.order_id);
+              return; 
             }
               console.log(successLogColors, `Found order: ${orderDetails.order}`);
 
@@ -158,7 +155,7 @@ const updatedPaymentRequestHandler = async (req, res, next) => {
                       status: "FAILED",
                       reason: "Not From Acuity"
                   };
-                  await transactionInfo.save();
+                  transactionInfo.save();
                   console.log(warnLogColors, "This order was cash, not possible to be from Acuity. It will be skipped.");
                   return;
               }
@@ -173,7 +170,7 @@ const updatedPaymentRequestHandler = async (req, res, next) => {
                       status: "FAILED",
                       reason: "Not From Acuity"
                   };
-                  await transactionInfo.save();
+                  transactionInfo.save();
                   console.log(warnLogColors, "The transaction is not from Acuity Scheduling. It will be skipped.");
                   return;
               }
@@ -182,7 +179,7 @@ const updatedPaymentRequestHandler = async (req, res, next) => {
                   status: "FAILED",
                   reason: "Transaction Not Yet Completed"
               };
-              await transactionInfo.save();
+              transactionInfo.save();
               console.log(warnLogColors, "The transaction has not yet been completed. It will be skipped.");
               return;
           }
