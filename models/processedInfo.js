@@ -47,7 +47,7 @@ const ProcessedInfoSchema = new Schema({
             type: String,
             enum: ["COMPLETED", "FAILED"]
         },
-        reason: String
+        reason: Schema.Types.Mixed
     }
 })
 
