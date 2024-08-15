@@ -183,8 +183,8 @@ const updatedPaymentRequestHandler = async (req, res, next) => {
                 reject(error);
               }
         }
+        return;
     });
-    return;
 }
 
 app.post("/payment_updated", quickResponse, asyncWrapper(updatedPaymentRequestHandler));
