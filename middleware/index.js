@@ -8,13 +8,13 @@ module.exports = {
     },
     quickResponse: async(req, res, next) => {
         const { payment } = req.body.data.object;
-        if (payment.id) {
+        if (payment && payment.id) {
             res.status(202)
             res.send("Request Received");
             await new Incoming({payment_id: payment.id}).save();
             next();
         } else {
-            res.status(404)
+            res.status(400)
             next("No payment ID specified");
         }
   }
