@@ -132,10 +132,10 @@ const updatedPaymentRequestHandler = async (req, res, next) => {
                 console.log(error.body.errors);
                 transactionInfo.result = {
                   status: "FAILED",
-                  reason: error.body.errors[0].detail
+                  reason: error.body.errors
                 }
                 await transactionInfo.save().then((error) => {
-                  console.log(errorLogColors, error.body.errors[0].detail);
+                  console.log(errorLogColors, error.body.errors);
                   return; 
                 })
             });
