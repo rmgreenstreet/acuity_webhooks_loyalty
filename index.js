@@ -45,6 +45,7 @@ const addLoyaltyPoints = async (payment, transactionInfo) => {
 
       console.log("Attempting to find customer with ID", payment.customer_id);
       const { customer } = await customersApi.retrieveCustomer(payment.customer_id);
+      console.log(customer);
       if (customer.given_name) transactionInfo.given_name = customer.given_name;
       if (customer.family_name) transactionInfo.family_name = customer.family_name;
 
