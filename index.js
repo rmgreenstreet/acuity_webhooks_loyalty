@@ -139,6 +139,7 @@ const updatedPaymentRequestHandler = async (req, res, next) => {
                 return; 
             });
             if (typeof orderDetails === undefined) {
+              console.log("no order found")
               transactionInfo.result = {
                 status: "FAILED",
                 reason: "No order found"
@@ -146,6 +147,7 @@ const updatedPaymentRequestHandler = async (req, res, next) => {
               transactionInfo.save()
               
               console.log(errorLogColors, "Error finding order ", payment.order_id);
+              console.log("returning now because no order found")
               return; 
             }
               console.log(successLogColors, `Found order: ${orderDetails.order}`);
