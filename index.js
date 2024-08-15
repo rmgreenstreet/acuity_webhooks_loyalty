@@ -150,7 +150,7 @@ const updatedPaymentRequestHandler = async (req, res, next) => {
                 return; 
               })
             }
-              console.log(successLogColors, `Found order: ${orderDetails}`);
+              console.log(successLogColors, `Found order: ${orderDetails.order}`);
 
               if (orderDetails.result.order.tenders[0].type === "CASH") {
                   transactionInfo.result = {
