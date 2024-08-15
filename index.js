@@ -99,7 +99,7 @@ const addLoyaltyPoints = async (payment, transactionInfo,) => {
           }
           transactionInfo.result = {
             status: "FAILED",
-            reason: error.detail
+            reason: error.message
           }
           await transactionInfo.save().then(() => {
             reject(error);
