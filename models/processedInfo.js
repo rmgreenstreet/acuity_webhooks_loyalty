@@ -32,6 +32,10 @@ const LoyaltyAccountSchema = new Schema({
 });
 
 const ProcessedInfoSchema = new Schema({
+    received: {
+        type: Date,
+        default: Date.now()
+    },
     payment: PaymentObjectSchema,
     given_name: String,
     family_name: String,
