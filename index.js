@@ -90,6 +90,7 @@ const addLoyaltyPoints = async (payment, transactionInfo) => {
       };
       await transactionInfo.save();
       console.log(successLogColors, `Successfully added points to ${customer.given_name} ${customer.family_name} for transaction ${payment.order_id}`);
+      return;
   } catch (error) {
       if (error instanceof ApiError) {
           error.result.errors.forEach(e => {
@@ -104,6 +105,7 @@ const addLoyaltyPoints = async (payment, transactionInfo) => {
           reason: error.detail
       };
       await transactionInfo.save();
+      return;
   }
 };
 
@@ -133,7 +135,7 @@ const updatedPaymentRequestHandler = async (req, res, next) => {
                 }
                 await transactionInfo.save();
                 console.log(warnLogColors, error.detail);
-                return; // Exit the function without doing anything further
+                return; 
             });
               console.log(successLogColors, `Found order: ${orderDetails}`);
 
@@ -144,13 +146,14 @@ const updatedPaymentRequestHandler = async (req, res, next) => {
                   };
                   await transactionInfo.save();
                   console.log(warnLogColors, "This order was cash, not possible to be from Acuity. It will be skipped.");
-                  return; // Exit the function without doing anything further
+                  return;
               }
 
               if (orderDetails.result.order.source.name === "Acuity Scheduling") {
                   console.log("This order came from Acuity. Attempting to add loyalty points");
                   await addLoyaltyPoints(payment, transactionInfo);
                   console.log(successLogColors, "Loyalty points successfully added");
+                  return;
               } else {
                   transactionInfo.result = {
                       status: "FAILED",
@@ -158,6 +161,7 @@ const updatedPaymentRequestHandler = async (req, res, next) => {
                   };
                   await transactionInfo.save();
                   console.log(warnLogColors, "The transaction is not from Acuity Scheduling. It will be skipped.");
+                  return;
               }
           } else {
               transactionInfo.result = {
@@ -166,9 +170,11 @@ const updatedPaymentRequestHandler = async (req, res, next) => {
               };
               await transactionInfo.save();
               console.log(warnLogColors, "The transaction has not yet been completed. It will be skipped.");
+              return;
           }
       } else {
           console.log(warnLogColors, "The request does not have payment data. Try again.");
+          return;
       }
   } catch (error) {
       if (error instanceof ApiError) {
