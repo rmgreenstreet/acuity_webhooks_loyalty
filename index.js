@@ -138,7 +138,51 @@ const updatedPaymentRequestHandler = async (req, res, next) => {
 
             if (payment.status === "COMPLETED") {
                 console.log("Finding the corresponding order: ", payment.order_id);
-                const orderDetails = await ordersApi.retrieveOrder(payment.order_id)
+                ordersApi.retrieveOrder(payment.order_id)
+                    .then(async (orderDetails) => {
+                        if (!orderDetails) {
+                            console.log("no order found")
+                            transactionInfo.result = {
+                                status: "FAILED",
+                                reason: "No order found"
+                            }
+                            await transactionInfo.save();
+                            console.log(errorLogColors, "Error finding order ", payment.order_id);
+                            console.log("returning now because no order found")
+                            return;
+                        }
+
+                        console.log(successLogColors, `Found order: ${orderDetails.order}`);
+
+                        if (orderDetails.result.order.tenders[0].type === "CASH") {
+                            transactionInfo.result = {
+                                status: "FAILED",
+                                reason: "Not From Acuity"
+                            };
+
+                            await transactionInfo.save();
+
+                            console.log(warnLogColors, "This order was cash, not possible to be from Acuity. It will be skipped.");
+                            return;
+                        }
+
+                        if (orderDetails.result.order.source.name === "Acuity Scheduling") {
+                            console.log("This order came from Acuity. Attempting to add loyalty points");
+                            const loyaltyAdded = await addLoyaltyPoints(payment, transactionInfo);
+                            console.log(loyaltyAdded);
+                            return;
+                        } else {
+                            transactionInfo.result = {
+                                status: "FAILED",
+                                reason: "Not From Acuity"
+                            };
+
+                            await transactionInfo.save();
+
+                            console.log(warnLogColors, "The transaction is not from Acuity Scheduling. It will be skipped.");
+                            return;
+                        }
+                    })
                     .catch(async (error) => {
                         console.log("entering retrieveOrder catch method");
                         transactionInfo.result = {
@@ -151,48 +195,6 @@ const updatedPaymentRequestHandler = async (req, res, next) => {
                         console.log(errorLogColors, "No order found")
                         return;
                     });
-                if (!orderDetails) {
-                    console.log("no order found")
-                    transactionInfo.result = {
-                        status: "FAILED",
-                        reason: "No order found"
-                    }
-                    await transactionInfo.save();
-                    console.log(errorLogColors, "Error finding order ", payment.order_id);
-                    console.log("returning now because no order found")
-                    return;
-                }
-
-                console.log(successLogColors, `Found order: ${orderDetails.order}`);
-
-                if (orderDetails.result.order.tenders[0].type === "CASH") {
-                    transactionInfo.result = {
-                        status: "FAILED",
-                        reason: "Not From Acuity"
-                    };
-
-                    await transactionInfo.save();
-
-                    console.log(warnLogColors, "This order was cash, not possible to be from Acuity. It will be skipped.");
-                    return;
-                }
-
-                if (orderDetails.result.order.source.name === "Acuity Scheduling") {
-                    console.log("This order came from Acuity. Attempting to add loyalty points");
-                    const loyaltyAdded = await addLoyaltyPoints(payment, transactionInfo);
-                    console.log(loyaltyAdded);
-                    return;
-                } else {
-                    transactionInfo.result = {
-                        status: "FAILED",
-                        reason: "Not From Acuity"
-                    };
-
-                    await transactionInfo.save();
-
-                    console.log(warnLogColors, "The transaction is not from Acuity Scheduling. It will be skipped.");
-                    return;
-                }
             } else {
                 transactionInfo.result = {
                     status: "FAILED",
