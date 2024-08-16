@@ -20,7 +20,7 @@ if (process.NODE_ENV !== "production") {
 }
 
 module.exports = {
-  connectToMongoose: (delay) => {
+  connectToMongoose: function (delay) {
     attempts++;
 
     mongoose.connect(connectString)
@@ -33,7 +33,7 @@ module.exports = {
         if (attempts < maxRetries) {
           const nextDelay = delay * 2; // Exponential backoff
           console.log(`Retrying in ${delay / 1000} seconds...`);
-          setTimeout(() => connectToMongoose(nextDelay), delay);
+          setTimeout(() => this.connectToMongoose(nextDelay), delay);
         } else {
           console.error('Max retries reached. Exiting...');
           process.exit(1); // Exit with failure code
