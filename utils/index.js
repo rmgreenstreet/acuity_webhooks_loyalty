@@ -14,7 +14,7 @@ class ExpressError extends Error {
 let connectString = ""
 
 if (process.NODE_ENV !== "production") {
-  connectString = "mongodb+srv://TCCAdmin:tcc102A%21%21@topekacatcafe.wvcjs.mongodb.net/?retryWrites=true&w=majority&appName=TopekaCatCafe"
+  connectString = process.env.DATABASE_URL
 } else {
   connectString = `mongodb+srv://${process.env.DATABASE_USERNAME}:${process.env.DATABASE_PASSWORD}@${process.env.DATABASE_URL}/?retryWrites=true&w=majority&appName=${process.env.DATABASE_APP_NAME}`
 }
