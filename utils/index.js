@@ -4,33 +4,41 @@ const maxRetries = 5; // Number of attempts
 let attempts = 0;
 
 class ExpressError extends Error {
-    constructor(message, statusCode) {
-        super();
-        this.message = message;
-        this.statusCode = statusCode
-    }
+  constructor(message, statusCode) {
+    super();
+    this.message = message;
+    this.statusCode = statusCode
+  }
 };
 
-module.exports = { 
-    connectToMongoose: (delay) => {
-        attempts++;
-        
-        mongoose.connect(process.env.DATABASE_URL)
-          .then(() => {
-              console.log(`Mongoose Connected to ${process.env.DATABASE_URL} in MongoDB`);
-          })
-          .catch((err) => {
-            console.error(`Failed to connect to MongoDB (attempt ${attempts}): ${err.message}`);
-            
-            if (attempts < maxRetries) {
-              const nextDelay = delay * 2; // Exponential backoff
-              console.log(`Retrying in ${delay / 1000} seconds...`);
-              setTimeout(() => connectToMongoose(nextDelay), delay);
-            } else {
-              console.error('Max retries reached. Exiting...');
-              process.exit(1); // Exit with failure code
-            }
-          });
-      },
-      ExpressError
+let connectString = ""
+
+if (process.NODE_ENV !== "production") {
+  connectString = "mongodb://localhost:27017/transaction-logging"
+} else {
+  connectString = `mongodb+srv://${process.env.DATABASE_USERNAME}:${process.env.DATABASE_PASSWORD}@${process.env.DATABASE_URL}/?retryWrites=true&w=majority&appName=${process.env.DATABASE_APP_NAME}`
+}
+
+module.exports = {
+  connectToMongoose: (delay) => {
+    attempts++;
+
+    mongoose.connect(connectString)
+      .then(() => {
+        console.log(`Mongoose Connected to MongoDB`);
+      })
+      .catch((err) => {
+        console.error(`Failed to connect to MongoDB (attempt ${attempts}): ${err.message}`);
+
+        if (attempts < maxRetries) {
+          const nextDelay = delay * 2; // Exponential backoff
+          console.log(`Retrying in ${delay / 1000} seconds...`);
+          setTimeout(() => connectToMongoose(nextDelay), delay);
+        } else {
+          console.error('Max retries reached. Exiting...');
+          process.exit(1); // Exit with failure code
+        }
+      });
+  },
+  ExpressError
 }
