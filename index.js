@@ -46,58 +46,60 @@ const addLoyaltyPoints = async (payment, transactionInfo) => {
         }
 
         console.log("Attempting to find customer with ID", payment.customer_id);
-        const { customer } = await customersApi.retrieveCustomer(payment.customer_id);
+        customersApi.retrieveCustomer(payment.customer_id).then(async (response) => {
+            const { customer } = response;
+            if (customer.givenName) transactionInfo.given_name = customer.givenName;
+            if (customer.familyName) transactionInfo.family_name = customer.familyName;
+
+            console.log("Customer found. Attempting to find loyalty account for:", customer.givenName, customer.familyName);
+            const loyaltyAccountResponse = await loyaltyApi.searchLoyaltyAccounts({
+                query: {
+                    customerIds: [payment.customer_id]
+                }
+            }).then(async (response) => {
+                if (response.result.loyaltyAccounts.length === 0) {
+                    transactionInfo.result = {
+                        status: "FAILED",
+                        reason: "No Loyalty Account"
+                    };
+
+                    await transactionInfo.save();
+                    console.log(warnLogColors, `Loyalty account not found for payment ${payment.id}`);
+                    return (warnLogColors, `Loyalty account not found for payment ${payment.id}`);
+                }
+
+                const loyaltyAccount = loyaltyAccountResponse.result.loyaltyAccounts[0];
+                console.log(successLogColors, "Found loyalty account:", loyaltyAccount);
+
+                const updatedLoyaltyAccount = await loyaltyApi.accumulateLoyaltyPoints(loyaltyAccount.id, {
+                    accumulatePoints: {
+                        orderId: payment.order_id
+                    },
+                    locationId: payment.location_id,
+                    idempotencyKey: crypto.randomUUID()
+                });
+
+                transactionInfo.loyalty_account = {
+                    id: loyaltyAccount.id,
+                    balance: updatedLoyaltyAccount.result.loyaltyAccount.balance,
+                    lifetime_points: updatedLoyaltyAccount.result.loyaltyAccount.lifetimePoints,
+                    created_at: loyaltyAccount.createdAt,
+                    updated_at: updatedLoyaltyAccount.result.loyaltyAccount.updatedAt
+                };
+
+                transactionInfo.result = {
+                    status: "COMPLETED",
+                    reason: "Points Successfully Added"
+                };
+
+                await transactionInfo.save();
+
+                // console.log(successLogColors, `Successfully added points to ${customer.given_name} ${customer.family_name} for transaction ${payment.order_id}`);
+                return (successLogColors, `Successfully added points to ${customer.given_name} ${customer.family_name} for transaction ${payment.order_id}`);
+
+            });
+        });
         console.log(customer);
-        if (customer.givenName) transactionInfo.given_name = customer.givenName;
-        if (customer.familyName) transactionInfo.family_name = customer.familyName;
-
-        console.log("Customer found. Attempting to find loyalty account for:", customer.givenName, customer.familyName);
-        const loyaltyAccountResponse = await loyaltyApi.searchLoyaltyAccounts({
-            query: {
-                customerIds: [payment.customer_id]
-            }
-        });
-
-        if (loyaltyAccountResponse.result.loyaltyAccounts.length === 0) {
-            transactionInfo.result = {
-                status: "FAILED",
-                reason: "No Loyalty Account"
-            };
-
-            await transactionInfo.save();
-
-            console.log(warnLogColors, `Loyalty account not found for payment ${payment.id}`);
-            return (warnLogColors, `Loyalty account not found for payment ${payment.id}`);
-        }
-
-        const loyaltyAccount = loyaltyAccountResponse.result.loyaltyAccounts[0];
-        console.log(successLogColors, "Found loyalty account:", loyaltyAccount);
-
-        const updatedLoyaltyAccount = await loyaltyApi.accumulateLoyaltyPoints(loyaltyAccount.id, {
-            accumulatePoints: {
-                orderId: payment.order_id
-            },
-            locationId: payment.location_id,
-            idempotencyKey: crypto.randomUUID()
-        });
-
-        transactionInfo.loyalty_account = {
-            id: loyaltyAccount.id,
-            balance: updatedLoyaltyAccount.result.loyaltyAccount.balance,
-            lifetime_points: updatedLoyaltyAccount.result.loyaltyAccount.lifetimePoints,
-            created_at: loyaltyAccount.createdAt,
-            updated_at: updatedLoyaltyAccount.result.loyaltyAccount.updatedAt
-        };
-
-        transactionInfo.result = {
-            status: "COMPLETED",
-            reason: "Points Successfully Added"
-        };
-
-        await transactionInfo.save();
-
-        // console.log(successLogColors, `Successfully added points to ${customer.given_name} ${customer.family_name} for transaction ${payment.order_id}`);
-        return (successLogColors, `Successfully added points to ${customer.given_name} ${customer.family_name} for transaction ${payment.order_id}`);
     } catch (error) {
         if (error instanceof ApiError) {
             error.result.errors.forEach(e => {
@@ -152,7 +154,7 @@ const updatedPaymentRequestHandler = async (req, res, next) => {
                             return;
                         }
 
-                        console.log(successLogColors, `Found order: ${orderDetails.order}`);
+                        console.log(successLogColors, `Found order: ${orderDetails}`);
 
                         if (orderDetails.result.order.tenders[0].type === "CASH") {
                             transactionInfo.result = {

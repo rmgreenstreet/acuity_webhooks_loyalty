@@ -25,7 +25,7 @@ module.exports = {
             if (attempts < maxRetries) {
               const nextDelay = delay * 2; // Exponential backoff
               console.log(`Retrying in ${delay / 1000} seconds...`);
-              setTimeout(() => connectWithRetry(nextDelay), delay);
+              setTimeout(() => connectToMongoose(nextDelay), delay);
             } else {
               console.error('Max retries reached. Exiting...');
               process.exit(1); // Exit with failure code
