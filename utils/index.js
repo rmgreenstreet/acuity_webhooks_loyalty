@@ -14,13 +14,15 @@ class ExpressError extends Error {
 let connectString = ""
 
 if (process.NODE_ENV !== "production") {
-  connectString = "mongodb://localhost:27017/transaction-logging"
+  connectString = "mongodb+srv://TCCAdmin:tcc102A%21%21@topekacatcafe.wvcjs.mongodb.net/?retryWrites=true&w=majority&appName=TopekaCatCafe"
 } else {
   connectString = `mongodb+srv://${process.env.DATABASE_USERNAME}:${process.env.DATABASE_PASSWORD}@${process.env.DATABASE_URL}/?retryWrites=true&w=majority&appName=${process.env.DATABASE_APP_NAME}`
 }
 
 module.exports = {
   connectToMongoose: function (delay) {
+    const retryFunction = this.connectToMongoose; // Store a reference to the function
+    attempts++;
     attempts++;
 
     mongoose.connect(connectString)
@@ -33,7 +35,7 @@ module.exports = {
         if (attempts < maxRetries) {
           const nextDelay = delay * 2; // Exponential backoff
           console.log(`Retrying in ${delay / 1000} seconds...`);
-          setTimeout(() => this.connectToMongoose(nextDelay), delay);
+          setTimeout(() => retryFunction(nextDelay), delay);
         } else {
           console.error('Max retries reached. Exiting...');
           process.exit(1); // Exit with failure code
