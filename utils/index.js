@@ -25,7 +25,7 @@ module.exports = {
     attempts++;
     attempts++;
 
-    mongoose.connect(connectString)
+    mongoose.connect(process.env.DB_CONNECTION_STRING)
       .then(() => {
         console.log(`Mongoose Connected to MongoDB`);
       })

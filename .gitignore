@@ -131,3 +131,5 @@ dist
 
 /test
 *_old*
+passwords.text
+passwords.txt
