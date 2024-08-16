@@ -210,7 +210,7 @@ app.get('/health', (req, res) => {
 
 app.all('*', (req, res) => {
     console.log(`Request received for invalid path: ${req.path}`);
-    res.status(40).send('This is not a valid endpoint');
+    res.status(401).send('This is not a valid endpoint');
 });
 
 app.listen(process.env.PORT, () => {
