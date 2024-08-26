@@ -163,7 +163,7 @@ const updatedPaymentRequestHandler = async (req, res, next) => {
                 return;
             }
 
-            console.log(`Found order: ${orderDetails}`);
+            console.log(`Found order: ${orderDetails.result.order}`);
 
             if (orderDetails.result.order.tenders[0].type === "CASH") {
                 transactionInfo.result = {
