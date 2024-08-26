@@ -62,7 +62,7 @@ const addLoyaltyPoints = async (payment, transactionInfo) => {
 
         console.log("loyaltyAccountResponse:", loyaltyAccountResponse)
 
-        if (loyaltyAccountResponse.result.loyaltyAccounts.length === 0) {
+        if (!loyaltyAccountResponse.result.loyaltyAccounts || loyaltyAccountResponse.result.loyaltyAccounts.length === 0) {
             transactionInfo.result = {
                 status: "FAILED",
                 reason: "No Loyalty Account"
