@@ -53,11 +53,14 @@ const addLoyaltyPoints = async (payment, transactionInfo) => {
         if (customer && customer.familyName) transactionInfo.family_name = customer.familyName;
 
         // console.log("Customer found. Attempting to find loyalty account for:", customer.givenName, customer.familyName);
+        console.log("Attempting to find loyalty account for customer ID", payment.customer_id);
         const loyaltyAccountResponse = await loyaltyApi.searchLoyaltyAccounts({
             query: {
                 customerIds: [payment.customer_id]
             }
         });
+
+        console.log("loyaltyAccountResponse:", loyaltyAccountResponse)
 
         if (loyaltyAccountResponse.result.loyaltyAccounts.length === 0) {
             transactionInfo.result = {
