@@ -63,13 +63,34 @@ const addLoyaltyPoints = async (payment, transactionInfo) => {
         console.log("loyaltyAccountResponse:", loyaltyAccountResponse.result)
 
         if (!loyaltyAccountResponse.result.loyaltyAccounts || loyaltyAccountResponse.result.loyaltyAccounts.length === 0) {
-            transactionInfo.result = {
-                status: "FAILED",
-                reason: "No Loyalty Account"
-            };
-            await transactionInfo.save();
-            console.warn(`Loyalty account not found for payment ${payment.id}`);
-            return;
+            const loyaltyProgram = await loyaltyApi.retrieveLoyaltyProgram('main');
+            const { result: newLoyaltyAccountResponse } = await loyaltyApi.createLoyaltyAccount({
+                loyaltyAccount: {
+                    programId: loyaltyProgram.program.id,
+                    mapping: {
+                        phoneNumber: customer.phone_number
+                    }
+                },
+                idempotencyKey: crypto.randomUUID()
+            });
+            
+            const newLoyaltyAccount = newLoyaltyAccountResponse.loyaltyAccount;
+            
+            const { result: accumulatePointsResponse } = await client.loyaltyApi.accumulateLoyaltyPoints(loyaltyAccountId, {
+                accumulatePoints: {
+                    orderId: 'ORDER_ID', // replace with actual order ID
+                    points: 10, // the number of points to accumulate
+                },
+            });
+            
+            const updatedLoyaltyAccount = accumulatePointsResponse.loyaltyAccount;
+            // transactionInfo.result = {
+            //     status: "FAILED",
+            //     reason: "No Loyalty Account"
+            // };
+            // await transactionInfo.save();
+            // console.warn(`Loyalty account not found for payment ${payment.id}`);
+            // return;
         }
 
         const loyaltyAccount = loyaltyAccountResponse.result.loyaltyAccounts[0];
