@@ -29,6 +29,49 @@ const errorLogColors = "\x1b[31m"
 connectToMongoose(5000);
 
 app.use(express.json())
+const createMissingLoyaltyAccount = async (customer, payment, transactionInfo) => {
+    try {
+        const loyaltyProgram = await loyaltyApi.retrieveLoyaltyProgram('main');
+        const { result: newLoyaltyAccountResponse } = await loyaltyApi.createLoyaltyAccount({
+            loyaltyAccount: {
+                programId: loyaltyProgram.program.id,
+                mapping: {
+                    phoneNumber: customer.phoneNumber
+                }
+            },
+            idempotencyKey: crypto.randomUUID()
+        });
+
+        const newLoyaltyAccount = newLoyaltyAccountResponse.loyaltyAccount;
+
+        const { result: accumulatePointsResponse } = await loyaltyApi.accumulateLoyaltyPoints(newLoyaltyAccount.id, {
+            accumulatePoints: {
+                orderId: payment.order_id
+            },
+            locationId: payment.location_id,
+            idempotencyKey: crypto.randomUUID()
+        });
+
+        const updatedLoyaltyAccount = accumulatePointsResponse.loyaltyAccount;
+        
+    } catch (error) {
+        console.error("Error in createMissingLoyaltyAccount:", error);
+
+        if (error instanceof ApiError) {
+            error.result.errors.forEach(e => {
+                console.error(e.category, e.code, e.detail);
+            });
+        }
+
+        transactionInfo.result = {
+            status: "FAILED",
+            reason: error
+        };
+
+        await transactionInfo.save();
+        return;
+    }
+}
 
 const addLoyaltyPoints = async (payment, transactionInfo) => {
     console.log("Entering addLoyaltyPoints");
@@ -63,27 +106,7 @@ const addLoyaltyPoints = async (payment, transactionInfo) => {
         console.log("loyaltyAccountResponse:", loyaltyAccountResponse.result)
 
         if (!loyaltyAccountResponse.result.loyaltyAccounts || loyaltyAccountResponse.result.loyaltyAccounts.length === 0) {
-            const loyaltyProgram = await loyaltyApi.retrieveLoyaltyProgram('main');
-            const { result: newLoyaltyAccountResponse } = await loyaltyApi.createLoyaltyAccount({
-                loyaltyAccount: {
-                    programId: loyaltyProgram.program.id,
-                    mapping: {
-                        phoneNumber: customer.phone_number
-                    }
-                },
-                idempotencyKey: crypto.randomUUID()
-            });
-            
-            const newLoyaltyAccount = newLoyaltyAccountResponse.loyaltyAccount;
-            
-            const { result: accumulatePointsResponse } = await client.loyaltyApi.accumulateLoyaltyPoints(loyaltyAccountId, {
-                accumulatePoints: {
-                    orderId: 'ORDER_ID', // replace with actual order ID
-                    points: 10, // the number of points to accumulate
-                },
-            });
-            
-            const updatedLoyaltyAccount = accumulatePointsResponse.loyaltyAccount;
+            await createMissingLoyaltyAccount(customer, payment, transactionInfo);
             // transactionInfo.result = {
             //     status: "FAILED",
             //     reason: "No Loyalty Account"
