@@ -87,14 +87,6 @@ const addLoyaltyPoints = async (payment, transactionInfo) => {
         if (loyaltyAccountResponse.result.loyaltyAccounts && loyaltyAccountResponse.result.loyaltyAccounts.length) {
             loyaltyAccount = loyaltyAccountResponse.result.loyaltyAccounts[0];
             console.log("Found loyalty account:", loyaltyAccount);
-
-            // transactionInfo.result = {
-            //     status: "FAILED",
-            //     reason: "No Loyalty Account"
-            // };
-            // await transactionInfo.save();
-            // console.warn(`Loyalty account not found for payment ${payment.id}`);
-            // return;
         } else {
             loyaltyAccount = await createMissingLoyaltyAccount(customer);
         }
@@ -107,14 +99,15 @@ const addLoyaltyPoints = async (payment, transactionInfo) => {
             idempotencyKey: crypto.randomUUID()
         });
 
-        const updatedLoyaltyAccount = updatedLoyaltyAccountResponse.result.loyaltyAccount;
+        const updatedLoyaltyAccount = await loyaltyApi.retrieveLoyaltyAccount(loyaltyAccount.id)
+        console.log(updatedLoyaltyAccount);
 
         transactionInfo.loyalty_account = {
             id: loyaltyAccount.id,
-            balance: updatedLoyaltyAccount.balance,
-            lifetime_points: updatedLoyaltyAccount.lifetimePoints,
+            balance: updatedLoyaltyAccount.loyaltyAccount.balance,
+            lifetime_points: updatedLoyaltyAccount.loyaltyAccount.lifetimePoints,
             created_at: loyaltyAccount.createdAt,
-            updated_at: updatedLoyaltyAccount.updatedAt
+            updated_at: updatedLoyaltyAccount.loyaltyAccount.updatedAt
         };
 
         transactionInfo.result = {
