@@ -91,7 +91,7 @@ const addLoyaltyPoints = async (payment, transactionInfo) => {
             loyaltyAccount = await createMissingLoyaltyAccount(customer);
         }
 
-        const updatedLoyaltyAccountResponse = await loyaltyApi.accumulateLoyaltyPoints(loyaltyAccount.id, {
+        await loyaltyApi.accumulateLoyaltyPoints(loyaltyAccount.id, {
             accumulatePoints: {
                 orderId: payment.order_id
             },
